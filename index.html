@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sadiq - Smart Bilingual Assistant & Planner</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & Cairo for Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Cairo', sans-serif;
+        }
+        .rtl-font {
+            font-family: 'Cairo', 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+    <!-- Top Navigation bar -->
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 px-4 py-3 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3 rtl:space-x-reverse">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-600/30">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg text-white leading-tight" id="app-title">Sadiq | صـديـق</h1>
+                <p class="text-xs text-slate-400" id="app-subtitle">Your AI & Time Assistant</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 rtl:space-x-reverse">
+            <!-- Language Toggle Button -->
+            <button onclick="toggleLanguage()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition border border-slate-600 flex items-center gap-1.5">
+                <i class="fa-solid fa-globe text-brand-500"></i>
+                <span id="lang-btn-text">AR / EN</span>
+            </button>
+            <!-- Settings Modal Trigger -->
+            <button onclick="openSettings()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 w-9 h-9 rounded-lg flex items-center justify-center transition border border-slate-600">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 pb-24 grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <!-- Left Column: Quick Status & Time -->
+        <div class="space-y-4">
+            <!-- Clock & Date Widget -->
+            <div class="bg-slate-800/80 backdrop-blur border border-slate-700/80 rounded-2xl p-5 shadow-xl text-center relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-brand-500/10 rounded-full blur-xl pointer-events-none"></div>
+                <div id="live-clock" class="text-3xl font-extrabold text-brand-400 tracking-wider">00:00:00</div>
+                <div id="live-date" class="text-sm text-slate-400 mt-1 font-medium">Loading date...</div>
+                <div class="mt-4 pt-3 border-t border-slate-700/60 flex justify-around text-center">
+                    <div>
+                        <span class="block text-xs text-slate-400" data-i18n="pendingTasks">Pending</span>
+                        <span id="stat-pending" class="text-lg font-bold text-amber-400">0</span>
+                    </div>
+                    <div class="border-r border-slate-700"></div>
+                    <div>
+                        <span class="block text-xs text-slate-400" data-i18n="completedTasks">Done</span>
+                        <span id="stat-done" class="text-lg font-bold text-brand-500">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick AI Assistant Prompts -->
+            <div class="bg-slate-800/80 backdrop-blur border border-slate-700/80 rounded-2xl p-4 shadow-xl">
+                <h3 class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-amber-400"></i> <span data-i18n="quickPrompts">Quick AI Actions</span>
+                </h3>
+                <div class="space-y-2">
+                    <button onclick="sendQuickPrompt('planMyDay')" class="w-full text-left rtl:text-right bg-slate-700/50 hover:bg-slate-700 p-2.5 rounded-xl text-xs text-slate-200 transition flex items-center justify-between group">
+                        <span data-i18n="promptPlan">Plan my day efficiently</span>
+                        <i class="fa-solid fa-arrow-right rtl:rotate-180 text-slate-500 group-hover:text-brand-400 transition"></i>
+                    </button>
+                    <button onclick="sendQuickPrompt('motivateMe')" class="w-full text-left rtl:text-right bg-slate-700/50 hover:bg-slate-700 p-2.5 rounded-xl text-xs text-slate-200 transition flex items-center justify-between group">
+                        <span data-i18n="promptMotivate">Give me daily motivation</span>
+                        <i class="fa-solid fa-arrow-right rtl:rotate-180 text-slate-500 group-hover:text-brand-400 transition"></i>
+                    </button>
+                    <button onclick="sendQuickPrompt('summarizeTasks')" class="w-full text-left rtl:text-right bg-slate-700/50 hover:bg-slate-700 p-2.5 rounded-xl text-xs text-slate-200 transition flex items-center justify-between group">
+                        <span data-i18n="promptSummarize">Summarize my current schedule</span>
+                        <i class="fa-solid fa-arrow-right rtl:rotate-180 text-slate-500 group-hover:text-brand-400 transition"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right/Main Column: Tabs (Chat vs Tasks) -->
+        <div class="md:col-span-2 bg-slate-800/80 backdrop-blur border border-slate-700/80 rounded-2xl shadow-xl flex flex-col h-[600px] overflow-hidden">
+            
+            <!-- Tab Headers -->
+            <div class="flex border-b border-slate-700 bg-slate-800/95">
+                <button onclick="switchTab('chat')" id="tab-btn-chat" class="flex-1 py-3.5 text-sm font-bold text-brand-400 border-b-2 border-brand-500 flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-comments"></i> <span data-i18n="tabChat">AI Assistant</span>
+                </button>
+                <button onclick="switchTab('tasks')" id="tab-btn-tasks" class="flex-1 py-3.5 text-sm font-semibold text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-list-check"></i> <span data-i18n="tabTasks">Reminders & Tasks</span>
+                </button>
+            </div>
+
+            <!-- Tab 1: AI Chat View -->
+            <div id="tab-content-chat" class="flex-1 flex flex-col h-full overflow-hidden">
+                <!-- Chat Messages Scroll Container -->
+                <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
+                    <!-- Initial Welcome Message -->
+                    <div class="flex items-start space-x-2 rtl:space-x-reverse">
+                        <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs shrink-0">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="bg-slate-700/80 rounded-2xl rounded-tl-none p-3.5 text-sm text-slate-200 max-w-[85%] shadow">
+                            <p id="welcome-msg">Hello! I am Sadiq, your personal bilingual assistant. I can remind you of tasks, organize your schedule, and answer questions. How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Form -->
+                <form id="chat-form" onsubmit="handleChatSubmit(event)" class="p-3 bg-slate-800 border-t border-slate-700 flex items-center gap-2">
+                    <input type="text" id="chat-input" placeholder="Ask Sadiq anything or add a task..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 transition">
+                    <button type="submit" id="send-btn" class="bg-brand-600 hover:bg-brand-500 text-white w-11 h-11 rounded-xl flex items-center justify-center transition shrink-0 shadow-lg shadow-brand-600/30">
+                        <i class="fa-solid fa-paper-plane rtl:rotate-180"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Tab 2: Tasks & Reminders View -->
+            <div id="tab-content-tasks" class="flex-1 flex flex-col h-full overflow-hidden hidden">
+                <!-- Task Input Bar -->
+                <div class="p-3 bg-slate-800/90 border-b border-slate-700 flex gap-2">
+                    <input type="text" id="task-input" placeholder="Add a new reminder or task..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 transition">
+                    <input type="datetime-local" id="task-time" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs text-slate-300 focus:outline-none focus:border-brand-500 transition">
+                    <button onclick="addNewTask()" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition shadow-md">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <!-- Task List Container -->
+                <div id="task-list" class="flex-1 p-4 overflow-y-auto space-y-2.5">
+                    <!-- Dynamically populated tasks -->
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-700">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    <i class="fa-solid fa-gear text-brand-500"></i> <span data-i18n="settingsTitle">Settings & Installation</span>
+                </h3>
+                <button onclick="closeSettings()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-slate-400 mb-1 text-xs font-semibold uppercase tracking-wider" data-i18n="apiKeyLabel">Gemini API Key (Optional Override)</label>
+                    <input type="password" id="api-key-input" placeholder="Leave empty to use built-in key" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-brand-500">
+                    <p class="text-[11px] text-slate-500 mt-1" data-i18n="apiKeyDesc">Your key is stored securely in your browser's local storage.</p>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/60 space-y-3">
+                    <h4 class="font-bold text-brand-400 flex items-center gap-2 text-base">
+                        <i class="fa-solid fa-mobile-screen"></i> <span data-i18n="installGuideTitle">طريقة التشغيل والتثبيت على هاتفك (بدون متجر)</span>
+                    </h4>
+                    <p class="text-xs text-slate-300 leading-relaxed" data-i18n="installGuideDesc">
+                        لكي تستخدم التطبيق كأنه تطبيق هاتف حقيقي (بدون متجر وبأداء سريع جداً)، اتبع الخطوات التالية:
+                    </p>
+                    <div class="space-y-2 text-xs text-slate-300">
+                        <div class="bg-slate-800/90 p-2.5 rounded-lg border border-slate-700">
+                            <strong class="text-brand-400 block mb-1">🍎 أجهزة آيفون (iPhone / Safari):</strong>
+                            1. افتح رابط التطبيق في متصفح <strong>Safari</strong>.<br>
+                            2. اضغط على زر المشاركة (Share) في شريط المتصفح السفلي.<br>
+                            3. اختر من القائمة <strong>"إضافة إلى الشاشة الرئيسية" (Add to Home Screen)</strong>.<br>
+                            4. اضغط "إضافة" وسيظهر التطبيق كأيقونة مستقلة على هاتفك.
+                        </div>
+                        <div class="bg-slate-800/90 p-2.5 rounded-lg border border-slate-700">
+                            <strong class="text-brand-400 block mb-1">🤖 أجهزة أندرويد (Android / Chrome):</strong>
+                            1. افتح رابط التطبيق في متصفح <strong>Google Chrome</strong>.<br>
+                            2. اضغط على قائمة الثلاث نقاط <strong>(⋮)</strong> في أعلى الزاوية.<br>
+                            3. اختر <strong>"إضافة إلى الشاشة الرئيسية"</strong> أو <strong>"تثبيت التطبيق" (Install App)</strong>.<br>
+                            4. وافق على التثبيت، ليظهر التطبيق في قائمة التطبيقات لديك.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-700 flex justify-end">
+                <button onclick="saveSettings()" class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2 rounded-xl text-sm font-semibold transition shadow-lg">
+                    <span data-i18n="saveBtn">Save Settings</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2.5 rounded-xl shadow-2xl text-xs flex items-center gap-2.5 transition-all duration-300 translate-y-20 opacity-0 z-50">
+        <i class="fa-solid fa-bell text-brand-500"></i>
+        <span id="toast-msg">Notification message</span>
+    </div>
+
+    <!-- Application Script Logic -->
+    <script>
+        // Dictionary for Bilingual Support (English & Arabic)
+        const translations = {
+            en: {
+                appTitle: "Sadiq | صـديـق",
+                appSubtitle: "Your AI & Time Assistant",
+                pendingTasks: "Pending",
+                completedTasks: "Done",
+                quickPrompts: "Quick AI Actions",
+                promptPlan: "Plan my day efficiently",
+                promptMotivate: "Give me daily motivation",
+                promptSummarize: "Summarize my current schedule",
+                tabChat: "AI Assistant",
+                tabTasks: "Reminders & Tasks",
+                welcomeMsg: "Hello! I am Sadiq, your personal bilingual assistant. I can remind you of tasks, organize your schedule, and answer questions. How can I help you today?",
+                chatPlaceholder: "Ask Sadiq anything or add a task...",
+                taskPlaceholder: "Add a new reminder or task...",
+                settingsTitle: "Settings & Installation",
+                apiKeyLabel: "Gemini API Key (Optional Override)",
+                apiKeyDesc: "Your key is stored securely in your browser's local storage.",
+                installGuideTitle: "Install on Phone (No App Store)",
+                installGuideDesc: "You can add this web app directly to your phone's home screen without downloading from stores:",
+                installIOS: "iOS (Safari): Tap the Share button > Select \"Add to Home Screen\".",
+                installAndroid: "Android (Chrome): Tap the menu (3 dots) > Select \"Add to Home screen\" or \"Install App\".",
+                saveBtn: "Save Settings",
+                noTasks: "No tasks yet. Add one above or ask Sadiq to create reminders!"
+            },
+            ar: {
+                appTitle: "صـديـق | Sadiq",
+                appSubtitle: "مساعدك الذكي وتنظيم الوقت",
+                pendingTasks: "قيد الانتظار",
+                completedTasks: "مكتملة",
+                quickPrompts: "إجراءات ذكية سريعة",
+                promptPlan: "خطط ليومي بكفاءة",
+                promptMotivate: "أعطني جرعة تحفيز يومية",
+                promptSummarize: "تلخيص جدول أعمالي الحالي",
+                tabChat: "المساعد الذكي",
+                tabTasks: "التذكيرات والمهام",
+                welcomeMsg: "أهلاً بك! أنا صديق، مساعدك الشخصي الثنائي اللغة. يمكنني تذكيرك بالمهام، تنظيم جدولك، والإجابة على أسئلتك. كيف يمكنني مساعدتك اليوم؟",
+                chatPlaceholder: "اسأل صديق أي شيء أو اطلب إضافة مهمة...",
+                taskPlaceholder: "أضف تذكير أو مهمة جديدة...",
+                settingsTitle: "الإعدادات وطريقة التثبيت",
+                apiKeyLabel: "مفتاح Gemini API (اختياري)",
+                apiKeyDesc: "يتم حفظ المفتاح بأمان في التخزين المحلي لمتصفحك.",
+                installGuideTitle: "التثبيت على الهاتف (بدون متجر التطبيقات)",
+                installGuideDesc: "يمكنك إضافة هذا التطبيق مباشرة إلى الشاشة الرئيسية لهاتفك بدون الحاجة للمتاجر:",
+                installIOS: "أجهزة آيفون (Safari): اضغط زر المشاركة > اختر \"إضافة إلى الشاشة الرئيسية\".",
+                installAndroid: "أجهزة أندرويد (Chrome): اضغط القائمة (3 نقاط) > اختر \"إضافة إلى الشاشة الرئيسية\" أو \"تثبيت التطبيق\".",
+                saveBtn: "حفظ الإعدادات",
+                noTasks: "لا توجد مهام حالياً. أضف مهمة بالأعلى أو اطلب من صديق جدولتها!"
+            }
+        };
+
+        let currentLang = localStorage.getItem('sadiq_lang') || 'ar';
+        let tasks = JSON.parse(localStorage.getItem('sadiq_tasks') || '[]');
+        let activeTab = 'chat';
+
+        // Initialize application on load
+        window.onload = function() {
+            applyLanguage();
+            updateClock();
+            setInterval(updateClock, 1000);
+            renderTasks();
+            updateTaskStats();
+            checkTaskReminders();
+            setInterval(checkTaskReminders, 30000); // Check alarms every 30s
+            
+            // Load custom API key if saved
+            const savedKey = localStorage.getItem('sadiq_api_key');
+            if (savedKey) {
+                document.getElementById('api-key-input').value = savedKey;
+            }
+        };
+
+        // Toggle Language between English and Arabic
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            localStorage.setItem('sadiq_lang', currentLang);
+            applyLanguage();
+        }
+
+        // Apply UI Language and Direction
+        function applyLanguage() {
+            const t = translations[currentLang];
+            const htmlTag = document.documentElement;
+            
+            if (currentLang === 'ar') {
+                htmlTag.setAttribute('dir', 'rtl');
+                htmlTag.setAttribute('lang', 'ar');
+                document.getElementById('lang-btn-text').innerText = 'English';
+            } else {
+                htmlTag.setAttribute('dir', 'ltr');
+                htmlTag.setAttribute('lang', 'en');
+                document.getElementById('lang-btn-text').innerText = 'العربية';
+            }
+
+            // Update static translation texts
+            document.getElementById('app-title').innerText = t.appTitle;
+            document.getElementById('app-subtitle').innerText = t.appSubtitle;
+            document.getElementById('welcome-msg').innerText = t.welcomeMsg;
+            document.getElementById('chat-input').placeholder = t.chatPlaceholder;
+            document.getElementById('task-input').placeholder = t.taskPlaceholder;
+
+            // Translate elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.innerText = t[key];
+            });
+
+            renderTasks();
+        }
+
+        // Live Clock & Date Update
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString(currentLang === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('live-date').innerText = now.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        // Tab Switcher
+        function switchTab(tab) {
+            activeTab = tab;
+            const chatContent = document.getElementById('tab-content-chat');
+            const tasksContent = document.getElementById('tab-content-tasks');
+            const chatBtn = document.getElementById('tab-btn-chat');
+            const tasksBtn = document.getElementById('tab-btn-tasks');
+
+            if (tab === 'chat') {
+                chatContent.classList.remove('hidden');
+                tasksContent.classList.add('hidden');
+                chatBtn.className = "flex-1 py-3.5 text-sm font-bold text-brand-400 border-b-2 border-brand-500 flex items-center justify-center gap-2 transition";
+                tasksBtn.className = "flex-1 py-3.5 text-sm font-semibold text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center justify-center gap-2 transition";
+            } else {
+                tasksContent.classList.remove('hidden');
+                chatContent.classList.add('hidden');
+                tasksBtn.className = "flex-1 py-3.5 text-sm font-bold text-brand-400 border-b-2 border-brand-500 flex items-center justify-center gap-2 transition";
+                chatBtn.className = "flex-1 py-3.5 text-sm font-semibold text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center justify-center gap-2 transition";
+            }
+        }
+
+        // Settings Modal Controls
+        function openSettings() {
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+        function saveSettings() {
+            const key = document.getElementById('api-key-input').value.trim();
+            if (key) {
+                localStorage.setItem('sadiq_api_key', key);
+            } else {
+                localStorage.removeItem('sadiq_api_key');
+            }
+            closeSettings();
+            showToast(currentLang === 'ar' ? 'تم حفظ الإعدادات بنجاح' : 'Settings saved successfully');
+        }
+
+        // Toast Message Notification
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // Task Management
+        function addNewTask() {
+            const input = document.getElementById('task-input');
+            const timeInput = document.getElementById('task-time');
+            const text = input.value.trim();
+            
+            if (!text) return;
+
+            const newTask = {
+                id: Date.now(),
+                text: text,
+                time: timeInput.value || '',
+                completed: false
+            };
+
+            tasks.push(newTask);
+            saveAndRenderTasks();
+            input.value = '';
+            timeInput.value = '';
+            showToast(currentLang === 'ar' ? 'تم إضافة المهمة بنجاح' : 'Task added successfully');
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+            saveAndRenderTasks();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveAndRenderTasks();
+        }
+
+        function saveAndRenderTasks() {
+            localStorage.setItem('sadiq_tasks', JSON.stringify(tasks));
+            renderTasks();
+            updateTaskStats();
+        }
+
+        function renderTasks() {
+            const listEl = document.getElementById('task-list');
+            if (tasks.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-12 text-slate-500 text-xs">${translations[currentLang].noTasks}</div>`;
+                return;
+            }
+
+            listEl.innerHTML = tasks.map(t => `
+                <div class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-3 flex items-center justify-between gap-3 group transition hover:border-slate-600">
+                    <div class="flex items-center gap-3 flex-1 overflow-hidden">
+                        <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})" class="w-4 h-4 accent-brand-500 rounded cursor-pointer">
+                        <div class="overflow-hidden">
+                            <p class="text-sm text-slate-200 truncate ${t.completed ? 'line-through text-slate-500' : ''}">${escapeHtml(t.text)}</p>
+                            ${t.time ? `<span class="text-[10px] text-brand-400 flex items-center gap-1 mt-0.5"><i class="fa-regular fa-clock"></i> ${formatTaskTime(t.time)}</span>` : ''}
+                        </div>
+                    </div>
+                    <button onclick="deleteTask(${t.id})" class="text-slate-500 hover:text-red-400 p-1.5 transition">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function updateTaskStats() {
+            const pending = tasks.filter(t => !t.completed).length;
+            const done = tasks.filter(t => t.completed).length;
+            document.getElementById('stat-pending').innerText = pending;
+            document.getElementById('stat-done').innerText = done;
+        }
+
+        function formatTaskTime(timeStr) {
+            try {
+                const date = new Date(timeStr);
+                return date.toLocaleString(currentLang === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return timeStr;
+            }
+        }
+
+        function checkTaskReminders() {
+            const now = new Date();
+            tasks.forEach(t => {
+                if (t.time && !t.completed && !t.notified) {
+                    const taskTime = new Date(t.time);
+                    if (now >= taskTime) {
+                        t.notified = true;
+                        showToast(`⏰ Reminder: ${t.text}`);
+                        addChatMessage(`⏰ Reminder alert: "${t.text}"`, 'assistant');
+                    }
+                }
+            });
+        }
+
+        // Chat & Gemini API Integration
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addChatMessage(message, 'user');
+            input.value = '';
+
+            // Show typing indicator
+            const typingId = showTypingIndicator();
+
+            try {
+                const aiReply = await callGeminiAPI(message);
+                removeTypingIndicator(typingId);
+                addChatMessage(aiReply, 'assistant');
+            } catch (err) {
+                removeTypingIndicator(typingId);
+                addChatMessage(currentLang === 'ar' ? 'عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي. يرجى المحاولة لاحقاً.' : 'Sorry, error communicating with AI. Please try again.', 'assistant');
+            }
+        }
+
+        function sendQuickPrompt(type) {
+            switchTab('chat');
+            let promptText = '';
+            if (type === 'planMyDay') {
+                promptText = currentLang === 'ar' ? 'برجاء مساعدتي في التخطيط ليومي بكفاءة وتنظيم مهامي وقتاً وفعالية.' : 'Please help me plan my day efficiently and organize my schedule and tasks.';
+            } else if (type === 'motivateMe') {
+                promptText = currentLang === 'ar' ? 'أعطني عبارات تحفيزية قوية ومميزة لأبدأ يومي بنشاط وإيجابية.' : 'Give me strong motivational words to start my day with energy and positivity.';
+            } else if (type === 'summarizeTasks') {
+                const taskSummary = tasks.map(t => `- ${t.text} (${t.completed ? 'Done' : 'Pending'})`).join('\n');
+                promptText = (currentLang === 'ar' ? 'لدي هذه المهام الحالية، برجاء تلخيصها وإعطائي نصيحة:\n' : 'I have these current tasks, please summarize them and give me advice:\n') + taskSummary;
+            }
+            document.getElementById('chat-input').value = promptText;
+            document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+        }
+
+        function addChatMessage(text, sender) {
+            const container = document.getElementById('chat-messages');
+            const isUser = sender === 'user';
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex items-start space-x-2 rtl:space-x-reverse ${isUser ? 'justify-end' : ''}`;
+            
+            if (isUser) {
+                messageDiv.innerHTML = `
+                    <div class="bg-brand-600 rounded-2xl rounded-tr-none p-3.5 text-sm text-white max-w-[85%] shadow">
+                        <p class="whitespace-pre-wrap">${escapeHtml(text)}</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white text-xs shrink-0">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs shrink-0">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="bg-slate-700/80 rounded-2xl rounded-tl-none p-3.5 text-sm text-slate-200 max-w-[85%] shadow">
+                        <p class="whitespace-pre-wrap">${escapeHtml(text)}</p>
+                    </div>
+                `;
+            }
+
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const container = document.getElementById('chat-messages');
+            const id = 'typing-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = "flex items-start space-x-2 rtl:space-x-reverse";
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs shrink-0">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="bg-slate-700/80 rounded-2xl rounded-tl-none p-3.5 text-sm text-slate-400 max-w-[85%] shadow flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-brand-400 animate-bounce"></span>
+                    <span class="w-2 h-2 rounded-full bg-brand-400 animate-bounce [animation-delay:0.2s]"></span>
+                    <span class="w-2 h-2 rounded-full bg-brand-400 animate-bounce [animation-delay:0.4s]"></span>
+                </div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return id;
+        }
+
+        function removeTypingIndicator(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        async function callGeminiAPI(prompt) {
+            const customKey = localStorage.getItem('sadiq_api_key') || '';
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${customKey}`;
+
+            const systemPrompt = currentLang === 'ar' 
+                ? "أنت صديق، مساعد شخصي ذكي وودود جداً يتحدث باللغة العربية والإنجليزية. تساعد المستخدم في تنظيم وقته، إدارة مهامه، وتقدم له إجابات مفيدة واحترافية."
+                : "You are Sadiq, an intelligent and friendly personal bilingual assistant. You help the user manage their time, tasks, and provide smart, professional answers.";
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            // Implement exponential backoff retry loop
+            let delay = 1000;
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error('API request failed');
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        return candidate.content.parts[0].text;
+                    }
+                } catch (err) {
+                    if (attempt === 2) throw err;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+            throw new Error('Failed after retries');
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    </script>
+</body>
+</html>
